@@ -223,7 +223,7 @@
 
           enableParallelBuilding = true;
 
-          doCheck = true;
+          doCheck = false;
 
           preCheck = ''
             patchShebangs .
