@@ -1,8 +1,9 @@
 {
   description = "A Nix-based continuous build system";
 
-  inputs.nixpkgs.follows = "nix/nixpkgs";
-  inputs.nix.url = "github:NixOS/nix/2.11.0";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.05";
+  inputs.nix.url = "github:NixOS/nix/2.17.0";
+  inputs.nix.inputs.nixpkgs.follows = "nixpkgs";
 
   outputs = { self, nixpkgs, nix }:
     let
@@ -272,6 +273,7 @@
         tests.install = forEachSystem (system:
           with import (nixpkgs + "/nixos/lib/testing-python.nix") { inherit system; };
           simpleTest {
+            name = "hydra-install";
             nodes.machine = hydraServer;
             testScript =
               ''
@@ -279,7 +281,7 @@
                 machine.wait_for_job("hydra-server")
                 machine.wait_for_job("hydra-evaluator")
                 machine.wait_for_job("hydra-queue-runner")
-                machine.wait_for_open_port("3000")
+                machine.wait_for_open_port(3000)
                 machine.succeed("curl --fail http://localhost:3000/")
               '';
           });
@@ -288,6 +290,7 @@
           let pkgs = pkgsBySystem.${system}; in
           with import (nixpkgs + "/nixos/lib/testing-python.nix") { inherit system; };
           simpleTest {
+            name = "hydra-notifications";
             nodes.machine = { pkgs, ... }: {
               imports = [ hydraServer ];
               services.hydra-dev.extraConfig = ''
@@ -315,7 +318,7 @@
 
               # Wait until InfluxDB can receive web requests
               machine.wait_for_job("influxdb")
-              machine.wait_for_open_port("8086")
+              machine.wait_for_open_port(8086)
 
               # Create an InfluxDB database where hydra will write to
               machine.succeed(
@@ -325,7 +328,7 @@
 
               # Wait until hydra-server can receive HTTP requests
               machine.wait_for_job("hydra-server")
-              machine.wait_for_open_port("3000")
+              machine.wait_for_open_port(3000)
 
               # Setup the project and jobset
               machine.succeed(
@@ -346,6 +349,7 @@
           let pkgs = pkgsBySystem.${system}; in
           with import (nixpkgs + "/nixos/lib/testing-python.nix") { inherit system; };
           makeTest {
+            name = "hydra-gitea";
             nodes.machine = { pkgs, ... }: {
               imports = [ hydraServer ];
               services.hydra-dev.extraConfig = ''
